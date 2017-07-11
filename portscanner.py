@@ -40,24 +40,23 @@ class Host:
 
 
 class Scanner:
-    def __init__(self, verbose=False, timeout=0.3, portlist = [21, 22, 23, 25, 80, 139, 443, 445, 1521, 3306, 3389, 5432, 8080, 8443]):
+    def __init__(self, verbose=False, timeout=0.3):
         self.hosts = set()
-        self.portlist = portlist
         socket.setdefaulttimeout(timeout)
         self.verbose = verbose
 
-    def discoverHosts(self, rangeprefix):
+    def discoverHosts(self, rangeprefix, discoveryPorts = [21, 22, 23, 25, 80, 139, 443, 445, 1521, 3306, 3389, 5432, 8080, 8443]):
         threads = []
         for i in range(1,255):
             host = Host(ip=rangeprefix + str(i))
-            t = threading.Thread(target=self.discoverSingleHost, args=(host,))
+            t = threading.Thread(target=self.discoverSingleHost, args=(host, discoveryPorts))
             threads.append(t)
             t.start()
         for thread in threads:
             thread.join()
 
-    def discoverSingleHost(self, host):
-        for port in self.portlist:
+    def discoverSingleHost(self, host, discoveryPorts):
+        for port in discoveryPorts:
             try:
                 s = socket.socket()
                 s.connect((host.ip, port))
