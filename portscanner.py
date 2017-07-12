@@ -13,6 +13,10 @@ class Host:
                 retval += str(p) + ', '
             return retval[: -2]
 
+        def __hash__(self):
+            return hash(tuple(sorted(self.__dict__.items())))
+
+
     def __init__(self, ip=None, hostname=None, ports=None):
         self.ip = ip
 
@@ -22,6 +26,8 @@ class Host:
                     self.hostname, _, _ = socket.gethostbyaddr(self.ip)
                 except:
                     self.hostname = None
+            else:
+                self.hostname = None
         else:
             self.hostname = hostname
             if self.ip is None:
@@ -33,10 +39,23 @@ class Host:
                 self.ports.add(int(p))
 
     def __str__(self):
-        return "%s (%s)" % (self.hostname, self.ip)
+        return "%s (%s)" % (self.hostname or "unknown", self.ip)
 
     def __repr__(self):
-        return self.ip
+        return self.__str__()
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.hostname == other.hostname and self.ip == other.ip and self.ports == other.ports
+        return NotImplemented
+
+    def __ne__(self, other):
+        if isinstance(other, self.__class__):
+            return not self.__eq__(other)
+        return NotImplemented
+
+    def __hash__(self):
+        return hash(tuple(sorted(self.__dict__.items())))
 
 
 class Scanner:
@@ -45,10 +64,17 @@ class Scanner:
         socket.setdefaulttimeout(timeout)
         self.verbose = verbose
 
+    def getHost(self, ip):
+        for host in self.hosts:
+            if host.ip == ip:
+                return host
+        return None
+
     def discoverHosts(self, rangeprefix, discoveryPorts = [21, 22, 23, 25, 80, 139, 443, 445, 1521, 3306, 3389, 5432, 8080, 8443]):
         threads = []
         for i in range(1,255):
-            host = Host(ip=rangeprefix + str(i))
+            existingHost = self.getHost(rangeprefix + str(i))
+            host = existingHost if existingHost is not None else Host(ip=rangeprefix + str(i))
             t = threading.Thread(target=self.discoverSingleHost, args=(host, discoveryPorts))
             threads.append(t)
             t.start()
