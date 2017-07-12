@@ -78,8 +78,6 @@ class Scanner:
             t = threading.Thread(target=self.discoverSingleHost, args=(host, discoveryPorts))
             threads.append(t)
             t.start()
-        for thread in threads:
-            thread.join()
 
     def discoverSingleHost(self, host, discoveryPorts):
         for port in discoveryPorts:
@@ -104,24 +102,26 @@ class Scanner:
             t = threading.Thread(target=self.scanSingleHost, args=(host,ports))
             threads.append(t)
             t.start()
-        for thread in threads:
-            thread.join()
 
     def scanSingleHost(self, host, ports):
         if self.verbose:
             print "Scanning", host
         for port in ports:
-            try:
-                s = socket.socket()
-                s.connect((host.ip, port))
-                # if we get here, the connection succeeded
-                if self.verbose:
-                    print port, 'open on', host
-                s.close()
-                host.ports.add(port)
-            except:
-                pass
+            t = threading.Thread(target=self.scanPort, args=(host, port))
+            t.start()
         if self.verbose:
             print "Finished scanning", host
+
+    def scanPort(self, host, port):
+        try:
+            s = socket.socket()
+            s.connect((host.ip, port))
+            # if we get here, the connection succeeded
+            if self.verbose:
+                print port, 'open on', host
+            s.close()
+            host.ports.add(port)
+        except:
+            pass
 
 
