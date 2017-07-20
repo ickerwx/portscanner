@@ -4,19 +4,19 @@ import socket
 import threading
 
 
+class Portlist(set):
+    def __str__(self):
+        ports = list(self)
+        retval = ""
+        for p in ports:
+            retval += str(p) + ', '
+        return retval[: -2]
+
+    def __hash__(self):
+        return hash(tuple(sorted(self.__dict__.items())))
+
+
 class Host:
-    class Portlist(set):
-        def __str__(self):
-            ports = list(self)
-            retval = ""
-            for p in ports:
-                retval += str(p) + ', '
-            return retval[: -2]
-
-        def __hash__(self):
-            return hash(tuple(sorted(self.__dict__.items())))
-
-
     def __init__(self, ip=None, hostname=None, ports=None):
         self.ip = ip
 
@@ -33,7 +33,7 @@ class Host:
             if self.ip is None:
                 self.ip = socket.gethostbyname(self.hostname)
 
-        self.ports = Host.Portlist()
+        self.ports = Portlist()
         if ports is not None:
             for p in ports:
                 self.ports.add(int(p))
