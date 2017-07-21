@@ -2,6 +2,7 @@
 
 import socket
 import threading
+from collections import Iterator
 
 
 class Host:
@@ -64,9 +65,9 @@ class Scanner:
         socket.setdefaulttimeout(timeout)
         self.verbose = verbose
 
-    def getHost(self, ip):
+    def getHost(self, data):
         for host in self.hosts:
-            if host.ip == ip:
+            if host.ip == data or host.hostname == data:
                 return host
         return None
 
@@ -107,7 +108,9 @@ class Scanner:
         for thread in threads:
             thread.join()
 
-    def scanSingleHost(self, host, ports):
+    def scanSingleHost(self, host, ports=None):
+        if ports is None:
+            ports = [x for x in range(1,65536)]
         if self.verbose:
             print "Scanning", host
         for port in ports:
@@ -125,3 +128,18 @@ class Scanner:
             print "Finished scanning", host
 
 
+class IPGenerator(Iterator):
+    def __init__(self, ipstring):
+        # acceptable input is
+        #   a single IP
+        #   a CIDR notation block
+        #   a string that contains * characters, one * for each possible octet
+        #       so 1.1.1.*
+        #          1.1.*.1
+        #          1.1.*.* etc.
+        #
+        # I know I could just use ipaddress
+        self.input = ipstring
+
+    def next(self):
+        pass
